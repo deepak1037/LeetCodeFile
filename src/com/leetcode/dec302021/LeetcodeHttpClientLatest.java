@@ -67,7 +67,7 @@ public class LeetcodeHttpClientLatest {
 			for (Integer questionId : entry.getValue()) {
 				addQuestionToList(hashId, questionId.toString());
 				count++;
-				System.out.println(count);
+				// System.out.println(count);
 				Thread.sleep(100);
 			}
 		}
@@ -257,27 +257,40 @@ public class LeetcodeHttpClientLatest {
 
 	private static void addQuestionToList(String hashId, String questionId) throws Exception {
 
+		int responseCode = -1;
 		String url = "https://leetcode.com/graphql";
-		URL obj = new URL(url);
-		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		
+		HttpURLConnection con = null;
+		do {
+			
 
-		loadHeader(con);
+			URL obj = new URL(url);
+			con = (HttpURLConnection) obj.openConnection();
+			loadHeader(con);
+			con.setDoOutput(true);
+			String postJsonData = "{\"operationName\":\"addQuestionToFavorite\",\"variables\":{\"favoriteIdHash\":\""
+					+ hashId + "\",\"questionId\":\"" + questionId
+					+ "\"},\"query\":\"mutation addQuestionToFavorite($favoriteIdHash: String!, $questionId: String!) {\\n  addQuestionToFavorite(favoriteIdHash: $favoriteIdHash, questionId: $questionId) {\\n    ok\\n    error\\n    favoriteIdHash\\n    questionId\\n    __typename\\n  }\\n}\\n\"}";
 
-		String postJsonData = "{\"operationName\":\"addQuestionToFavorite\",\"variables\":{\"favoriteIdHash\":\""
-				+ hashId + "\",\"questionId\":\"" + questionId
-				+ "\"},\"query\":\"mutation addQuestionToFavorite($favoriteIdHash: String!, $questionId: String!) {\\n  addQuestionToFavorite(favoriteIdHash: $favoriteIdHash, questionId: $questionId) {\\n    ok\\n    error\\n    favoriteIdHash\\n    questionId\\n    __typename\\n  }\\n}\\n\"}";
+			// Send post request
+			
+			DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+			wr.writeBytes(postJsonData);
+			wr.flush();
+			wr.close();
 
-		// Send post request
-		con.setDoOutput(true);
-		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-		wr.writeBytes(postJsonData);
-		wr.flush();
-		wr.close();
+			 responseCode = con.getResponseCode();
+			System.out.println("nSending 'POST' request to URL : " + url);
+			System.out.println("Post Data : " + postJsonData);
+			System.out.println("Response Code : " + responseCode);
+			if (responseCode != 200) {
+				Thread.sleep(2000);
+				System.out.println(con.getHeaderFields());
+			}
+		}while(responseCode != 200);
+		
+		
 
-		int responseCode = con.getResponseCode();
-		System.out.println("nSending 'POST' request to URL : " + url);
-		System.out.println("Post Data : " + postJsonData);
-		System.out.println("Response Code : " + responseCode);
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 		String output;
